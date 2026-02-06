@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id          String    @id @default(uuid())
+  mobile      String    @unique
+  password    String
+  name        String?
+  gender      String?
+  dob         DateTime?
+  bio         String?
+  profilePic  String?
+  govtId      String?
+  isVerified  Boolean   @default(false)
+  location    String?
+  role        String    @default("USER") // USER, ADMIN
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  hostedEvents Event[]   @relation("HostEvents")
+  bookings     Booking[] @relation("GuestBookings")
+
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+
+  reviewsWritten   Review[]  @relation("Reviewer")
+  reviewsReceived  Review[]  @relation("Reviewee")
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  rating      Int      // 1-5
+  comment     String?
+  createdAt   DateTime @default(now())
+
+  reviewerId  String
+  reviewer    User     @relation("Reviewer", fields: [reviewerId], references: [id])
+  
+  revieweeId  String
+  reviewee    User     @relation("Reviewee", fields: [revieweeId], references: [id])
+
+  bookingId   String   
+  booking     Booking  @relation(fields: [bookingId], references: [id])
+
+  @@unique([bookingId, reviewerId])
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  hostId      String
+  host        User     @relation("HostEvents", fields: [hostId], references: [id])
+  name        String
+  details     String
+  capacity    Int
+  price       Float
+  location    String
+  photos      String? // We will store JSON string or simple string
+  autoApprove Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bookings Booking[]
+}
+
+model Booking {
+  id        String   @id @default(uuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  guestId   String
+  guest     User     @relation("GuestBookings", fields: [guestId], references: [id])
+  status    String   @default("PENDING") // PENDING, APPROVED, DECLINED
+  createdAt DateTime @default(now())
+  
+  reviews   Review[]
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content    String
+  createdAt  DateTime @default(now())
+}
