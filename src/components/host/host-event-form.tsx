@@ -28,6 +28,7 @@ const formSchema = z.object({
     capacity: z.number().min(1, "Capacity must be at least 1"),
     price: z.number().min(0, "Price must be 0 or more"),
     location: z.string().min(3, "Location is required"),
+    date: z.string().or(z.date()), // Accepts string from input or Date object
     photos: z.array(z.string()).optional(),
     autoApprove: z.boolean(),
 })
@@ -46,6 +47,7 @@ export function HostEventForm() {
             capacity: 10,
             price: 0,
             location: "",
+            date: new Date(),
             autoApprove: true,
             photos: [],
         },

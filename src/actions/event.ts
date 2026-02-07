@@ -12,6 +12,7 @@ const eventSchema = z.object({
     capacity: z.coerce.number().min(1, "Capacity must be at least 1"),
     price: z.coerce.number().min(0, "Price must be 0 or more"),
     location: z.string().min(3, "Location is required"),
+    date: z.string().or(z.date()),
     photos: z.array(z.string()).optional(), // Array of URLs
     autoApprove: z.boolean().default(true),
 })
@@ -32,6 +33,7 @@ export async function createEvent(data: z.infer<typeof eventSchema>) {
                 capacity: data.capacity,
                 price: data.price,
                 location: data.location,
+                date: new Date(data.date), // Ensure it's a Date object
                 photos: data.photos ? JSON.stringify(data.photos) : undefined,
                 autoApprove: data.autoApprove,
             },

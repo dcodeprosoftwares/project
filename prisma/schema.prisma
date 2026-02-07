@@ -60,6 +60,7 @@ model Event {
   hostId      String
   host        User     @relation("HostEvents", fields: [hostId], references: [id])
   name        String
+  date        DateTime
   details     String
   capacity    Int
   price       Float

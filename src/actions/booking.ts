@@ -59,3 +59,88 @@ export async function createBooking(eventId: string) {
         return { error: "Failed to book event" }
     }
 }
+
+export async function getHostedEvents() {
+    const session = await getServerSession(authOptions)
+
+    if (!session || !session.user) {
+        return []
+    }
+
+    const userId = session.user.id
+
+    try {
+        const events = await prisma.event.findMany({
+            where: {
+                hostId: userId
+            },
+            include: {
+                bookings: {
+                    include: {
+                        guest: {
+                            select: {
+                                id: true,
+                                name: true,
+                                profilePic: true
+                            }
+                        }
+                    },
+                    orderBy: {
+                        createdAt: 'desc'
+                    }
+                },
+                _count: {
+                    select: { bookings: true }
+                }
+            },
+            orderBy: {
+                date: 'desc'
+            }
+        })
+
+        return events
+    } catch (error) {
+        console.error("Get hosted events error", error)
+        return []
+    }
+}
+
+export async function getUserBookings() {
+    const session = await getServerSession(authOptions)
+
+    if (!session || !session.user) {
+        return []
+    }
+
+    const userId = session.user.id
+
+    try {
+        const bookings = await prisma.booking.findMany({
+            where: {
+                guestId: userId
+            },
+            include: {
+                event: {
+                    include: {
+                        host: {
+                            select: {
+                                name: true,
+                                profilePic: true
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                event: {
+                    date: 'asc' // Upcoming first (we'll filter in component or here)
+                }
+            }
+        })
+
+        return bookings
+    } catch (error) {
+        console.error("Get user bookings error", error)
+        return []
+    }
+}

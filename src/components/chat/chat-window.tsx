@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { sendMessage } from "@/actions/chat"
+import { sendMessage, getMessages } from "@/actions/chat"
 import { Send, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -57,6 +57,28 @@ export function ChatWindow({
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight
         }
     }, [messages])
+
+    // Polling for new messages
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            try {
+                const newMessages = await getMessages(otherUser.id)
+                if (newMessages) {
+                    setMessages(prev => {
+                        // Simple check to avoid re-renders if nothing changed
+                        if (newMessages.length !== prev.length) {
+                            return newMessages as Message[]
+                        }
+                        return prev
+                    })
+                }
+            } catch (error) {
+                console.error("Polling error", error)
+            }
+        }, 4000)
+
+        return () => clearInterval(interval)
+    }, [otherUser.id])
 
     async function handleSend(e: React.FormEvent) {
         e.preventDefault()

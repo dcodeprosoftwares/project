@@ -28,7 +28,23 @@ function RelativeTime({ date }: { date: Date }) {
     return <span className="text-xs text-gray-500">{formatDistanceToNow(new Date(date), { addSuffix: true })}</span>
 }
 
-export function ChatList({ conversations }: { conversations: Conversation[] }) {
+import { getConversations } from "@/actions/chat"
+
+export function ChatList({ conversations: initialConversations }: { conversations: Conversation[] }) {
+    const [conversations, setConversations] = useState(initialConversations)
+
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            try {
+                const latest = await getConversations()
+                setConversations(latest)
+            } catch (error) {
+                console.error("Failed to poll conversations", error)
+            }
+        }, 5000)
+        return () => clearInterval(interval)
+    }, [])
+
     if (conversations.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400">
