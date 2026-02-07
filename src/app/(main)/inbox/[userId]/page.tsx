@@ -7,7 +7,8 @@ import { prisma } from "@/lib/prisma"
 import { ReviewDialog } from "@/components/reviews/review-dialog"
 import { Button } from "@/components/ui/button"
 
-export default async function ChatPage({ params }: { params: { userId: string } }) {
+export default async function ChatPage({ params }: { params: Promise<{ userId: string }> }) {
+    const { userId } = await params
     const session = await getServerSession(authOptions)
 
     if (!session || !session.user) {
@@ -15,7 +16,7 @@ export default async function ChatPage({ params }: { params: { userId: string } 
     }
 
     const otherUser = await prisma.user.findUnique({
-        where: { id: params.userId },
+        where: { id: userId },
         select: { id: true, name: true, profilePic: true }
     })
 
@@ -23,7 +24,7 @@ export default async function ChatPage({ params }: { params: { userId: string } 
         return <div>User not found</div>
     }
 
-    const messages = await getMessages(params.userId)
+    const messages = await getMessages(userId)
 
     // Check for eligible review
     // 1. Find booking between them (either direction) with STATUS approved
